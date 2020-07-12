@@ -20,10 +20,10 @@ class ServerlessPlugin {
   constructor(serverless, options) {
     this.serverless = serverless
     this.serverless.service.provider.environment =
-      this.serverless.service.provider.environment || {}
+      this.serverless.service.provider.environment || {};
     this.config =
-      this.serverless.service.custom && this.serverless.service.custom['dotenv']
-    this.logging = this.config && typeof this.config.logging !== 'undefined' ? this.config.logging : true;
+      (this.serverless.service.custom && this.serverless.service.custom['dotenv']) || {};
+    this.logging = typeof this.config.logging !== 'undefined' ? this.config.logging : true;
 
     this.loadEnv(this.getEnvironment(options))
   }
@@ -33,12 +33,11 @@ class ServerlessPlugin {
   }
 
   resolveEnvFileName(env) {
-    if (this.config && this.config.path) {
+    if (this.config.path) {
       return this.config.path
     }
 
-    let basePath =
-      this.config && this.config.basePath ? this.config.basePath : ''
+    let basePath = this.config.basePath ? this.config.basePath : ''
 
     let defaultPath = basePath + '.env'
     let path = basePath + '.env.' + env
@@ -56,11 +55,11 @@ class ServerlessPlugin {
       var include = false
       var exclude = false
 
-      if (this.config && this.config.include) {
+      if (this.config.include) {
         include = this.config.include
       }
 
-      if (this.config && this.config.exclude && !include) {
+      if (this.config.exclude && !include) {
         exclude = this.config.exclude
       }
 
