@@ -16,7 +16,7 @@ const dotenvExpand = require('dotenv-expand')
 const chalk = require('chalk')
 const fs = require('fs')
 
-class ServerlessPlugin {
+class ServerlessInjectionPlugin {
   constructor(serverless, options) {
     this.serverless = serverless
     this.serverless.service.provider.environment =
@@ -27,14 +27,21 @@ class ServerlessPlugin {
 
     this.envVars = this.loadEnv(this.getEnvironment(options));
 
-    this.hooks = {
-      'package:initialize': () => {
-        this.serverless.service.getAllFunctions().forEach(f => {
-          const fn = this.serverless.service.getFunction(f);
-          Object.keys(fn.environment).forEach(e => fn.environment[e] = this.envVars[e] || fn.environment[e]);
-        });
-      }
-    };
+    if (this.envVars) {
+      this.hooks = {
+        'package:initialize': () => {
+          if (this.logging) {
+            this.serverless.cli.log(
+              'Injecting environments into function variables as function level.....'
+            );
+          }
+          this.serverless.service.getAllFunctions().forEach(f => {
+            const fn = this.serverless.service.getFunction(f);
+            Object.keys(fn.environment).forEach(e => fn.environment[e] = this.envVars[e] || fn.environment[e]);
+          });
+        }
+      };
+    }
   }
 
   getEnvironment(options) {
@@ -103,14 +110,14 @@ class ServerlessPlugin {
         });
       } else {
         if (this.logging) {
-          this.serverless.cli.log('DOTENV: Could not find .env file.')
+          this.serverless.cli.log('DOTENV: Could not find .env file. The ServerlessInjectionPlugin is using your local environments');
         }
       }
       return envVars;
     } catch (e) {
       console.error(
         chalk.red(
-          '\n Serverless Plugin Error --------------------------------------\n'
+          '\n ServerlessInjectionPlugin Error --------------------------------------\n'
         )
       )
       console.error(chalk.red('  ' + e.message))
@@ -118,4 +125,4 @@ class ServerlessPlugin {
   }
 }
 
-module.exports = ServerlessPlugin
+module.exports = ServerlessInjectionPlugin
