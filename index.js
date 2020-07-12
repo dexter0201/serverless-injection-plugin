@@ -22,7 +22,7 @@ class ServerlessPlugin {
     this.serverless.service.provider.environment =
       this.serverless.service.provider.environment || {};
     this.config =
-      (this.serverless.service.custom && this.serverless.service.custom['dotenv']) || {};
+      (this.serverless.service.custom && this.serverless.service.custom['injection']) || {};
     this.logging = typeof this.config.logging !== 'undefined' ? this.config.logging : true;
 
     this.envVars = this.loadEnv(this.getEnvironment(options));
