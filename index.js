@@ -18,34 +18,35 @@ const fs = require('fs')
 
 class ServerlessInjectionPlugin {
   constructor(serverless, options) {
-    this.serverless = serverless
+    this.serverless = serverless;
+    this.options = options;
     this.serverless.service.provider.environment =
       this.serverless.service.provider.environment || {};
     this.config =
       (this.serverless.service.custom && this.serverless.service.custom['injection']) || {};
     this.logging = typeof this.config.logging !== 'undefined' ? this.config.logging : true;
-
-    this.envVars = this.loadEnv(this.getEnvironment(options));
-
-    if (this.envVars) {
-      this.hooks = {
-        'package:initialize': () => {
-          if (this.logging) {
-            this.serverless.cli.log(
-              'Injecting environments into function variables as function level.....'
-            );
-          }
-          this.serverless.service.getAllFunctions().forEach(f => {
-            const fn = this.serverless.service.getFunction(f);
-            Object.keys(fn.environment).forEach(e => fn.environment[e] = this.envVars[e] || fn.environment[e]);
-          });
+    this.envVars = this.loadEnv(this.getEnvironment()) || {};
+    this.hooks = {
+      'package:initialize': () => {
+        if (this.logging) {
+          this.serverless.cli.log(
+            'Injecting environments into function variables as function level.....'
+          );
         }
-      };
-    }
+        this.serverless.service.getAllFunctions().forEach(f => {
+          const fn = this.serverless.service.getFunction(f);
+          Object.keys(fn.environment).forEach(e => fn.environment[e] = this.envVars[e] || fn.environment[e]);
+        });
+      },
+      'invoke:local:loadEnvVars': () => {
+          const fn = this.options.functionObj;
+          Object.keys(fn.environment).forEach(e => fn.environment[e] = this.envVars[e] || fn.environment[e]);
+        }
+    };
   }
 
-  getEnvironment(options) {
-    return options.stage || 'development'
+  getEnvironment() {
+    return this.options.stage || 'development'
   }
 
   resolveEnvFileName(env) {
