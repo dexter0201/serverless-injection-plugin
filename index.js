@@ -67,17 +67,21 @@ class ServerlessInjectionPlugin {
     try {
       let envVars = this.config.expandDotEnv
         ? dotenvExpand(dotenv.config({ path: envFileName })).parsed
-        : dotenv.config({ path: envFileName }).parsed
+        : dotenv.config({ path: envFileName }).parsed;
 
-      var include = false
-      var exclude = false
+      var include = false;
+      var exclude = false;
 
       if (this.config.include) {
-        include = this.config.include
+        include = this.config.include;
+      }
+
+      if (['integration', 'staging', 'production'].indexOf(env) === -1) {
+        this.serverless.service.custom['appEnv'] = {};
       }
 
       if (this.config.exclude && !include) {
-        exclude = this.config.exclude
+        exclude = this.config.exclude;
       }
 
       if (envVars) {
