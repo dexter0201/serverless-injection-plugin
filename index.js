@@ -1,4 +1,4 @@
-'use strict'
+"use strict";
 // See here: https://www.serverless.com/blog/writing-serverless-plugins
 /**
  * Lifecycle Events:
@@ -9,12 +9,12 @@
  * compileFunctions
  * compileEvents
  * deploy
-**/
+ **/
 
-const dotenv = require('dotenv')
-const dotenvExpand = require('dotenv-expand')
-const chalk = require('chalk')
-const fs = require('fs')
+const dotenv = require("dotenv");
+const dotenvExpand = require("dotenv-expand");
+const chalk = require("chalk");
+const fs = require("fs");
 
 class ServerlessInjectionPlugin {
   constructor(serverless, options) {
@@ -23,47 +23,54 @@ class ServerlessInjectionPlugin {
     this.serverless.service.provider.environment =
       this.serverless.service.provider.environment || {};
     this.config =
-      (this.serverless.service.custom && this.serverless.service.custom['injection']) || {};
-    this.logging = typeof this.config.logging !== 'undefined' ? this.config.logging : true;
+      (this.serverless.service.custom &&
+        this.serverless.service.custom["injection"]) ||
+      {};
+    this.logging =
+      typeof this.config.logging !== "undefined" ? this.config.logging : true;
     this.envVars = this.loadEnv(this.getEnvironment()) || {};
     this.hooks = {
-      'package:initialize': () => {
+      "package:initialize": () => {
         if (this.logging) {
           this.serverless.cli.log(
-            'Injecting environments into function variables as function level.....'
+            "Injecting environments into function variables as function level....."
           );
         }
-        this.serverless.service.getAllFunctions().forEach(f => {
+        this.serverless.service.getAllFunctions().forEach((f) => {
           const fn = this.serverless.service.getFunction(f);
-          Object.keys(fn.environment).forEach(e => fn.environment[e] = this.envVars[e] || fn.environment[e]);
+          Object.keys(fn.environment).forEach(
+            (e) => (fn.environment[e] = this.envVars[e] || fn.environment[e])
+          );
         });
       },
-      'invoke:local:loadEnvVars': () => {
-          const fn = this.options.functionObj;
-          Object.keys(fn.environment).forEach(e => fn.environment[e] = this.envVars[e] || fn.environment[e]);
-        }
+      "invoke:local:loadEnvVars": () => {
+        const fn = this.options.functionObj;
+        Object.keys(fn.environment).forEach(
+          (e) => (fn.environment[e] = this.envVars[e] || fn.environment[e])
+        );
+      },
     };
   }
 
   getEnvironment() {
-    return this.options.stage || 'development'
+    return this.options.stage || "development";
   }
 
   resolveEnvFileName(env) {
     if (this.config.path) {
-      return this.config.path
+      return this.config.path;
     }
 
-    let basePath = this.config.basePath ? this.config.basePath : ''
+    let basePath = this.config.basePath ? this.config.basePath : "";
 
-    let defaultPath = basePath + '.env'
-    let path = basePath + '.env.' + env
+    let defaultPath = basePath + ".env";
+    let path = basePath + ".env." + env;
 
-    return fs.existsSync(path) ? path : defaultPath
+    return fs.existsSync(path) ? path : defaultPath;
   }
 
   loadEnv(env) {
-    var envFileName = this.resolveEnvFileName(env)
+    var envFileName = this.resolveEnvFileName(env);
     try {
       let envVars = this.config.expandDotEnv
         ? dotenvExpand(dotenv.config({ path: envFileName })).parsed
@@ -76,8 +83,12 @@ class ServerlessInjectionPlugin {
         include = this.config.include;
       }
 
-      if (['integration', 'staging', 'production'].indexOf(env) === -1) {
-        this.serverless.service.custom['appEnv'] = {};
+      if (
+        ["integration", "integration-beta", "staging", "production"].indexOf(
+          env
+        ) === -1
+      ) {
+        this.serverless.service.custom["appEnv"] = {};
       }
 
       if (this.config.exclude && !include) {
@@ -87,26 +98,26 @@ class ServerlessInjectionPlugin {
       if (envVars) {
         if (this.logging) {
           this.serverless.cli.log(
-            'DOTENV: Loading environment variables from ' + envFileName + ':'
-          )
+            "DOTENV: Loading environment variables from " + envFileName + ":"
+          );
         }
         if (include) {
           Object.keys(envVars)
-            .filter(key => !include.includes(key))
-            .forEach(key => {
-              delete envVars[key]
-            })
+            .filter((key) => !include.includes(key))
+            .forEach((key) => {
+              delete envVars[key];
+            });
         }
         if (exclude) {
           Object.keys(envVars)
-            .filter(key => exclude.includes(key))
-            .forEach(key => {
-              delete envVars[key]
-            })
+            .filter((key) => exclude.includes(key))
+            .forEach((key) => {
+              delete envVars[key];
+            });
         }
-        Object.keys(envVars).forEach(key => {
+        Object.keys(envVars).forEach((key) => {
           if (this.logging) {
-            this.serverless.cli.log('\t - ' + key);
+            this.serverless.cli.log("\t - " + key);
           }
 
           if (this.config.injectProviderEnv) {
@@ -115,19 +126,21 @@ class ServerlessInjectionPlugin {
         });
       } else {
         if (this.logging) {
-          this.serverless.cli.log('DOTENV: Could not find .env file. The ServerlessInjectionPlugin is using your local environments');
+          this.serverless.cli.log(
+            "DOTENV: Could not find .env file. The ServerlessInjectionPlugin is using your local environments"
+          );
         }
       }
       return envVars;
     } catch (e) {
       console.error(
         chalk.red(
-          '\n ServerlessInjectionPlugin Error --------------------------------------\n'
+          "\n ServerlessInjectionPlugin Error --------------------------------------\n"
         )
-      )
-      console.error(chalk.red('  ' + e.message))
+      );
+      console.error(chalk.red("  " + e.message));
     }
   }
 }
 
-module.exports = ServerlessInjectionPlugin
+module.exports = ServerlessInjectionPlugin;

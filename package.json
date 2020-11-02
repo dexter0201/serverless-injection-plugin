@@ -1,6 +1,6 @@
 {
   "name": "serverless-injection-plugin",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Custom serverless behavior",
   "main": "index.js",
   "scripts": {
