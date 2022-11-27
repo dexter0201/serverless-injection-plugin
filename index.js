@@ -10,7 +10,6 @@
  * compileEvents
  * deploy
  **/
-
 const dotenv = require("dotenv");
 const dotenvExpand = require("dotenv-expand");
 const chalk = require("chalk");
@@ -23,29 +22,26 @@ class ServerlessInjectionPlugin {
     this.serverless.service.provider.environment =
       this.serverless.service.provider.environment || {};
     this.config =
-      (this.serverless.service.custom &&
-        this.serverless.service.custom["injection"]) ||
-      {};
-    this.logging =
-      typeof this.config.logging !== "undefined" ? this.config.logging : true;
+      (this.serverless.service.custom && this.serverless.service.custom["injection"]) || {};
+    this.logging = typeof this.config.logging !== "undefined" ? this.config.logging : true;
     this.envVars = this.loadEnv(this.getEnvironment()) || {};
     this.hooks = {
       "package:initialize": () => {
         if (this.logging) {
           this.serverless.cli.log(
-            "Injecting environments into function variables as function level....."
+            "Loading environments into function variables as function level ..."
           );
         }
         this.serverless.service.getAllFunctions().forEach((f) => {
           const fn = this.serverless.service.getFunction(f);
-          Object.keys(fn.environment).forEach(
+          Object.keys(fn.environment || []).forEach(
             (e) => (fn.environment[e] = this.envVars[e] || fn.environment[e])
           );
         });
       },
       "invoke:local:loadEnvVars": () => {
         const fn = this.options.functionObj;
-        Object.keys(fn.environment).forEach(
+        Object.keys(fn.environment || []).forEach(
           (e) => (fn.environment[e] = this.envVars[e] || fn.environment[e])
         );
       },
@@ -84,9 +80,8 @@ class ServerlessInjectionPlugin {
       }
 
       if (
-        ["integration", "integration-beta", "staging", "production"].indexOf(
-          env
-        ) === -1
+        typeof this.serverless.service.custom === "object" &&
+        ["integration", "integration-beta", "staging", "production"].indexOf(env) === -1
       ) {
         this.serverless.service.custom["appEnv"] = {};
       }
@@ -127,18 +122,13 @@ class ServerlessInjectionPlugin {
       } else {
         if (this.logging) {
           this.serverless.cli.log(
-            "DOTENV: Could not find .env file. The ServerlessInjectionPlugin is using your local environments"
+            "DOTENV: Could not find .env file. The ServerlessInjectionPlugin is using your system environment variables to inject to lambda functions"
           );
         }
       }
       return envVars;
     } catch (e) {
-      console.error(
-        chalk.red(
-          "\n ServerlessInjectionPlugin Error --------------------------------------\n"
-        )
-      );
-      console.error(chalk.red("  " + e.message));
+      console.error(chalk.red("\n[ServerlessInjectionPlugin]: "), chalk.red(e.message));
     }
   }
 }
